@@ -1,0 +1,46 @@
+# EditorConfig is awesome: https://EditorConfig.org
+# This file should be the first one editors read for any project member's setup.
+
+root = true
+
+[*]
+charset                  = utf-8
+end_of_line              = lf
+indent_style             = space
+indent_size              = 4
+insert_final_newline     = true
+trim_trailing_whitespace = true
+max_line_length          = 100
+
+# Frontend (React + TypeScript) prefers 2-space indentation
+[*.{ts,tsx,js,jsx,json,css,html,vue,svelte}]
+indent_size = 2
+
+# Markdown allows trailing whitespace (for line breaks)
+[*.md]
+trim_trailing_whitespace = false
+
+# YAML / TOML / dotenv keep their own conventions
+[*.{yml,yaml,toml,env}]
+indent_size = 2
+
+# Shell scripts and Makefiles use tabs
+[*.{sh,bash,zsh}]
+indent_style = tab
+
+[Makefile]
+indent_style = tab
+
+# Python — PEP 8 already agrees with our defaults above
+[*.py]
+indent_size = 4
+max_line_length = 100
+
+# Go (in case anyone adds Go tooling later)
+[*.go]
+indent_style = tab
+indent_size  = 4
+
+# SQL — many teams prefer 2-space; match the project's existing style
+[*.sql]
+indent_size = 2

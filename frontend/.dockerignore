@@ -1,0 +1,40 @@
+# Frontend image — keep only what `frontend/Dockerfile` actually copies.
+
+.git/
+.github/
+.gitignore
+.editorconfig
+.prettierrc.json
+.prettierignore
+.dockerignore
+.env
+.env.*
+!.env.example
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+../docs/
+../README.md
+../LICENSE
+../CHANGELOG.md
+../lab/
+../data/
+
+# Build output of a previous production build, if any
+dist/
+
+# Only the React source and the manifest the image actually needs.
+package.json
+package-lock.json
+vite.config.ts
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+eslint.config.js
+index.html
+Dockerfile
+src/
+public/

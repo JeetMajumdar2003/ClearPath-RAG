@@ -1,0 +1,29 @@
+# CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Each line is a file pattern followed by one or more owners. Owners receive
+# review requests automatically when a pull request modifies matching files.
+# Order matters: later patterns override earlier ones.
+
+# Default owners — every PR needs a review from one of these.
+*                          @jeet-majumdar
+
+# Backend (Python / FastAPI / Alembic / SQL stored procedures)
+backend/                   @jeet-majumdar
+sql/                       @jeet-majumdar
+
+# Frontend (React / Vite / TypeScript)
+frontend/                  @jeet-majumdar
+
+# Infrastructure & deployment
+docker-compose.yml         @jeet-majumdar
+Dockerfile                 @jeet-majumdar
+backend/Dockerfile         @jeet-majumdar
+frontend/Dockerfile        @jeet-majumdar
+
+# CI / DevOps
+.github/                   @jeet-majumdar
+
+# Security-sensitive files
+SECURITY.md                @jeet-majumdar
+backend/app/core/security.py @jeet-majumdar

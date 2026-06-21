@@ -1,0 +1,39 @@
+# Backend image — keep only what `backend/Dockerfile` actually copies.
+# Everything else is .gitignored at build time.
+
+.git/
+.github/
+.gitignore
+.editorconfig
+.prettierrc.json
+.prettierignore
+.dockerignore
+.env
+.env.*
+!.env.example
+
+.vscode/
+.idea/
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+htmlcov/
+*.egg-info/
+
+../docs/
+../README.md
+../LICENSE
+../CHANGELOG.md
+../lab/
+../data/
+../images/
+../assets/
+
+# The backend image only needs the FastAPI code and the migrations.
+app/
+alembic/
+alembic.ini
+requirements.txt
+Dockerfile
+tests/

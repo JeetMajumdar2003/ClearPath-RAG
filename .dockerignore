@@ -1,0 +1,55 @@
+# Root-level .dockerignore — keeps secrets, build artifacts, and local
+# tooling out of every container image built by `docker compose build`.
+#
+# Per-service Dockerfiles inherit these rules by default.
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS cruft
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Python — never copy the venv into the image
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+**/htmlcov/
+**/.pytest_cache/
+**/*.egg-info/
+
+# Node — never copy node_modules into the image (each Dockerfile installs its own)
+**/node_modules/
+**/dist/
+**/build/
+**/.vite/
+
+# Docker volumes / compose state
+postgres_data/
+
+# Documentation that doesn't need to be inside the image
+docs/
+README.md
+LICENSE
+CHANGELOG.md
+
+# Workshop materials — kept in the repo for reference, not used at runtime
+lab/
+
+# Sample data is only needed in the SQL migrations, not the runtime image
+data/

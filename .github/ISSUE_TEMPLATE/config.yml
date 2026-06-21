@@ -1,0 +1,13 @@
+# Config
+# https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
+
+_blank_issues_enabled: false
+
+contact_links:
+  - name: Discussions
+    url: https://github.com/<owner>/<repo>/discussions
+    about: Ask questions and share ideas with the community.
+
+  - name: Troubleshooting guide
+    url: TROUBLESHOOTING.md
+    about: Check the in-repo troubleshooting guide before opening a bug.
