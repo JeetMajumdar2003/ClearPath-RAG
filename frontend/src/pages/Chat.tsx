@@ -9,9 +9,8 @@ import {
   RefreshCw,
   ThumbsUp,
   ThumbsDown,
-  ChevronDown,
-  ChevronUp,
   AlertTriangle,
+  History,
 } from 'lucide-react'
 import api from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -137,6 +136,7 @@ export default function ChatPage() {
   const [settings, setSettings] = useState<RetrievalSettings>(DEFAULT_SETTINGS)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [expandedCases, setExpandedCases] = useState<Record<string, boolean>>({})
+  const [historyOpen, setHistoryOpen] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -269,25 +269,68 @@ export default function ChatPage() {
   const activeWeightLabel = weightLabel(settings.vectorWeight, settings.keywordWeight)
 
   return (
-    <div className="-m-6 h-[calc(100vh-4rem)] flex bg-slate-50">
-      {/* ====================== CHAT COLUMN ====================== */}
-      <section className="flex flex-col flex-1 min-w-0 border-r border-slate-200">
-        {/* Chat header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-white">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-900">Clinical case assistant</h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Vector + Hybrid Retrieval · GPT-4o Generation
-            </p>
-          </div>
-          <Button variant="outline" size="sm" onClick={startNewConversation}>
-            <Plus className="h-4 w-4" />
-            New conversation
-          </Button>
-        </header>
+    <div className="h-full flex bg-slate-50">
+      {/* ====================== HISTORY SIDEBAR ====================== */}
+      <aside
+        className={cn(
+          'hidden md:flex flex-col border-r border-slate-200 bg-white transition-all duration-300',
+          historyOpen ? 'md:w-64' : 'md:w-14'
+        )}
+      >
+        <div className="flex h-14 items-center justify-between px-3 border-b border-slate-200">
+          <button
+            type="button"
+            onClick={() => setHistoryOpen((v) => !v)}
+            className="flex items-center justify-center rounded-md p-1.5 text-slate-500 hover:bg-slate-100"
+            aria-label={historyOpen ? 'Hide history' : 'Show history'}
+          >
+            <History className="h-4 w-4" />
+          </button>
+          {historyOpen && (
+            <Button variant="outline" size="sm" onClick={startNewConversation} className="ml-auto">
+              <Plus className="h-4 w-4" />
+              New chat
+            </Button>
+          )}
+        </div>
 
+        <div className="flex-1 overflow-y-auto px-2 py-3 scrollbar-thin">
+          {historyOpen ? (
+            <div className="space-y-1">
+              <p className="px-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">
+                Recent
+              </p>
+              {messages.length === 0 ? (
+                <p className="px-2 text-xs text-slate-400">No conversations yet.</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startNewConversation}
+                  className="w-full text-left rounded-md border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 hover:border-teal-300 hover:shadow-sm transition"
+                >
+                  Current session
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={startNewConversation}
+                className="flex h-9 w-9 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100"
+                title="New chat"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* ====================== CHAT COLUMN ====================== */}
+      <section className="flex flex-col flex-1 min-w-0 relative">
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-6 scrollbar-thin pb-40">
           {messages.length === 0 ? (
             <EmptyChat onPick={(text) => setInput(text)} userName={user?.full_name} />
           ) : (
@@ -307,120 +350,100 @@ export default function ChatPage() {
         </div>
 
         {/* Input area */}
-        <div className="border-t border-slate-200 bg-white px-6 py-4">
+        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-slate-50 via-slate-50 to-transparent pt-6 pb-2 px-6">
           <div className="mx-auto max-w-3xl">
-            {/* Retrieval controls */}
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSettingsOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
-              >
-                <Sliders className="h-3.5 w-3.5" />
-                Retrieval settings
-                {settingsOpen ? (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                )}
-              </button>
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700">
-                Top {settings.topN}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700">
-                {activeWeightLabel}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700">
-                {settings.embeddingType}
-              </span>
-              <span className="ml-auto text-[11px] text-slate-400">
-                Rate limit: 10 requests / minute per IP.
-              </span>
-            </div>
-
             {settingsOpen && (
-              <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-600 mb-1">
-                    Top N
-                  </label>
-                  <div className="flex flex-wrap gap-1">
-                    {TOP_N_OPTIONS.map((n) => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => setSettings((s) => ({ ...s, topN: n }))}
-                        className={cn(
-                          'rounded-md border px-2 py-1 text-xs',
-                          settings.topN === n
-                            ? 'border-teal-600 bg-teal-600 text-white'
-                            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                        )}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-600 mb-1">
-                    Hybrid weight
-                  </label>
-                  <div className="flex flex-wrap gap-1">
-                    {WEIGHT_PRESETS.map((p) => {
-                      const active =
-                        Math.abs(settings.vectorWeight - p.vector) < 0.01 &&
-                        Math.abs(settings.keywordWeight - p.keyword) < 0.01
-                      return (
+              <div className="mb-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                      Top N
+                    </label>
+                    <div className="flex flex-wrap gap-1">
+                      {TOP_N_OPTIONS.map((n) => (
                         <button
-                          key={p.label}
+                          key={n}
                           type="button"
-                          onClick={() =>
-                            setSettings((s) => ({
-                              ...s,
-                              vectorWeight: p.vector,
-                              keywordWeight: p.keyword,
-                            }))
-                          }
+                          onClick={() => setSettings((s) => ({ ...s, topN: n }))}
                           className={cn(
                             'rounded-md border px-2 py-1 text-xs',
-                            active
+                            settings.topN === n
                               ? 'border-teal-600 bg-teal-600 text-white'
                               : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                           )}
                         >
-                          {p.label}
+                          {n}
                         </button>
-                      )
-                    })}
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                      Hybrid weight
+                    </label>
+                    <div className="flex flex-wrap gap-1">
+                      {WEIGHT_PRESETS.map((p) => {
+                        const active =
+                          Math.abs(settings.vectorWeight - p.vector) < 0.01 &&
+                          Math.abs(settings.keywordWeight - p.keyword) < 0.01
+                        return (
+                          <button
+                            key={p.label}
+                            type="button"
+                            onClick={() =>
+                              setSettings((s) => ({
+                                ...s,
+                                vectorWeight: p.vector,
+                                keywordWeight: p.keyword,
+                              }))
+                            }
+                            className={cn(
+                              'rounded-md border px-2 py-1 text-xs',
+                              active
+                                ? 'border-teal-600 bg-teal-600 text-white'
+                                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                            )}
+                          >
+                            {p.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                      Embedding type
+                    </label>
+                    <select
+                      value={settings.embeddingType}
+                      onChange={(e) =>
+                        setSettings((s) => ({ ...s, embeddingType: e.target.value }))
+                      }
+                      className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-teal-500 focus:outline-none"
+                    >
+                      <option value="FullCase">FullCase</option>
+                      <option value="SymptomsOnly">SymptomsOnly</option>
+                      <option value="DiagnosisOnly">DiagnosisOnly</option>
+                      <option value="TreatmentOnly">TreatmentOnly</option>
+                      <option value="OutcomeOnly">OutcomeOnly</option>
+                    </select>
                   </div>
                 </div>
-                <div>
-                  <label className="block text-[11px] font-medium text-slate-600 mb-1">
-                    Embedding type
-                  </label>
-                  <select
-                    value={settings.embeddingType}
-                    onChange={(e) =>
-                      setSettings((s) => ({ ...s, embeddingType: e.target.value }))
-                    }
-                    className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700 focus:border-teal-500 focus:outline-none"
-                  >
-                    <option value="FullCase">FullCase</option>
-                    <option value="SymptomsOnly">SymptomsOnly</option>
-                    <option value="DiagnosisOnly">DiagnosisOnly</option>
-                    <option value="TreatmentOnly">TreatmentOnly</option>
-                    <option value="OutcomeOnly">OutcomeOnly</option>
-                  </select>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-500">
+                    {activeWeightLabel} · Top {settings.topN} · {settings.embeddingType}
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Rate limit: 10 requests / minute per IP.
+                  </span>
                 </div>
               </div>
             )}
-
             {/* Composer */}
-            <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-100">
+            <div className="flex items-end gap-2 rounded-2xl border-2 border-slate-200 bg-white p-2 shadow-lg focus-within:border-teal-400 focus-within:ring-2 focus-within:ring-teal-100">
               <textarea
                 ref={textareaRef}
-                rows={1}
+                rows={3}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -430,8 +453,21 @@ export default function ChatPage() {
                   }
                 }}
                 placeholder="Describe the patient presentation, symptoms, and relevant history…"
-                className="flex-1 resize-none bg-transparent px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="flex-1 resize-none bg-transparent px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none min-h-18"
               />
+              <button
+                type="button"
+                onClick={() => setSettingsOpen((v) => !v)}
+                className={cn(
+                  'flex items-center justify-center rounded-lg border px-2 py-2 text-xs font-medium transition-colors',
+                  settingsOpen
+                    ? 'border-teal-600 bg-teal-600 text-white'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                )}
+                title="Retrieval settings"
+              >
+                <Sliders className="h-4 w-4" />
+              </button>
               <Button
                 onClick={send}
                 disabled={input.trim().length < 10 || mutation.isPending}
@@ -445,27 +481,36 @@ export default function ChatPage() {
                 Send
               </Button>
             </div>
-            <p className="mt-1.5 text-[11px] text-slate-400 text-center">
-              Press Enter to send · Shift + Enter for new line
-            </p>
+            <div className="mt-1.5 text-[11px] text-slate-400 text-center flex *:items-center justify-between mx-1">
+              <p>
+                <span className="font-semibold">AI Can make mistakes!</span> Always verify information with clinical guidelines.
+              </p>
+              <p>
+                Press Enter to send · Shift + Enter for new line
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ====================== RETRIEVAL COLUMN ====================== */}
-      <aside className="hidden xl:flex w-105 flex-col bg-white">
-        <header className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900">Retrieved cases</h2>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Latest results from the most recent query.
-            </p>
+      {/* ====================== RETRIEVAL SIDEBAR ====================== */}
+      <aside className="hidden xl:flex w-100 flex-col bg-white border-l border-slate-200">
+        <header className="px-5 py-4 border-b border-slate-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-slate-500" />
+              <div>
+                <h2 className="text-sm font-semibold text-slate-900">Retrieved cases</h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">Latest results from the most recent query.</p>
+              </div>
+            </div>
+            <Badge variant="outline">{retrievedCases.length} hits</Badge>
           </div>
-          <Badge variant="outline">{retrievedCases.length} hits</Badge>
         </header>
+
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 scrollbar-thin">
           {retrievedCases.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center py-16 text-slate-500">
+            <div className="flex flex-col items-center justify-center text-center py-10 text-slate-500">
               <Sparkles className="h-7 w-7 text-slate-300 mb-2" />
               <p className="text-sm font-medium text-slate-600">No cases yet</p>
               <p className="text-xs text-slate-400 mt-1 max-w-65">
@@ -478,8 +523,8 @@ export default function ChatPage() {
                 key={`${c.case_id}-${idx}`}
                 rank={idx + 1}
                 caseItem={c}
-                vectorWeight={latestAssistant?.settings.vectorWeight ?? 0.6}
-                keywordWeight={latestAssistant?.settings.keywordWeight ?? 0.4}
+                vectorWeight={settings.vectorWeight}
+                keywordWeight={settings.keywordWeight}
                 expanded={!!expandedCases[`latest-${c.case_id}`]}
                 onToggle={() =>
                   setExpandedCases((p) => ({
@@ -491,6 +536,7 @@ export default function ChatPage() {
             ))
           )}
         </div>
+
         <footer className="border-t border-slate-200 px-5 py-3 text-[11px] text-slate-400">
           Hybrid score combines vector similarity and keyword relevance.
         </footer>
