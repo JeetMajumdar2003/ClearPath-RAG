@@ -90,9 +90,16 @@ def get_usage_analytics(db: Session, days: int = 30) -> AnalyticsUsage:
 
 def get_performance_analytics(db: Session, days: int = 30) -> AnalyticsPerformance:
     since = datetime.now(timezone.utc) - timedelta(days=days)
-    base = db.query(QueryLog).filter(QueryLog.created_at >= since, QueryLog.latency_ms.isnot(None))
+    success_logs = (
+        db.query(QueryLog)
+        .filter(
+            QueryLog.created_at >= since,
+            QueryLog.latency_ms.isnot(None),
+            QueryLog.status == QueryStatus.success,
+        )
+    )
 
-    latencies = [r.latency_ms for r in base.all() if r.latency_ms is not None]
+    latencies = [r.latency_ms for r in success_logs.all() if r.latency_ms is not None]
     latencies.sort()
 
     def percentile(values: list[int], p: float) -> float:

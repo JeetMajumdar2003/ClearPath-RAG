@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     postgres_user: str = "clearpath"
     postgres_password: str = "clearpath_dev_password"
 
+    # Clinical data store — works for BOTH local SQL Server and Azure SQL.
+    # The pyodbc connection is identical, only the address/credentials differ.
     sql_server: str = ""
     sql_database: str = "ProjectClearPath"
     sql_username: str = ""
@@ -35,11 +37,47 @@ class Settings(BaseSettings):
     sql_encrypt: str = "yes"
     sql_trust_server_certificate: str = "no"
 
+    # Table names (overridable via .env if you use a different schema layout).
+    clinical_cases_table: str = "dbo.ClinicalCases"
+    clinical_cases_primary_key: str = "PK_ClinicalCases"
+    embeddings_table: str = "dbo.ClinicalCaseEmbeddings"
+    fulltext_catalog_name: str = "ClinicalCasesFTCatalog"
+
+    # ------------------------------------------------------------------ AI provider
+    # ``openrouter``    — Python pipeline, OpenRouter REST API (free chat models)
+    # ``azure_python``  — Python pipeline, Azure OpenAI REST API
+    # ``azure``         — legacy mode: Azure SQL stored procedures do everything
+    ai_provider: str = "openrouter"
+
+    # ----- OpenRouter -----------------------------------------------------------
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    openrouter_embed_model: str = "nvidia/llama-nemotron-embed-vl-1b-v2:free"
+    openrouter_chat_model: str = "nvidia/nemotron-3-super-120b-a12b:free"
+    openrouter_embedding_dimensions: int = 2048
+    openrouter_app_name: str = "ClearPath RAG"
+    openrouter_http_referer: str = "http://localhost:5173"
+
+    # ----- Azure OpenAI (used by ``azure`` and ``azure_python`` modes) ----------
+    azure_openai_endpoint: str = ""
+    azure_openai_api_key: str = ""
+    azure_openai_api_version_embeddings: str = "2023-05-15"
+    azure_openai_api_version_chat: str = "2025-01-01-preview"
+    azure_openai_embedding_deployment: str = "text-embedding-3-small"
+    azure_openai_chat_deployment: str = "gpt-4o"
+
+    # ----- Shared RAG defaults --------------------------------------------------
     search_default_top_n: int = 5
     rrf_vector_weight: float = 0.6
     rrf_keyword_weight: float = 0.4
     rrf_k: int = 60
     embedding_type_default: str = "FullCase"
+    embedding_vector_dimensions: int = 2048
+
+    # ----- Legacy Azure SQL SP names (only used when ``AI_PROVIDER=azure``) -----
+    sp_find_similar_cases: str = "dbo.usp_FindSimilarClinicalCases"
+    sp_rrf_search: str = "dbo.usp_RRFSearchClinicalCases"
+    sp_rag_search: str = "dbo.usp_ClearPath_RAG_Search"
 
     admin_email: str = "admin@clearpath.local"
     admin_password: str = "Admin123!"
@@ -69,6 +107,11 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+    @property
+    def is_legacy_azure_sql_mode(self) -> bool:
+        """True when the legacy SP-driven Azure SQL path is active."""
+        return self.ai_provider.lower().strip() == "azure"
 
 
 settings = Settings()

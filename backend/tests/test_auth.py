@@ -7,20 +7,20 @@ def test_register_creates_user(client: TestClient):
     response = client.post(
         "/api/v1/auth/register",
         json={
-            "email": "new@test.local",
+            "email": "new@test.example.com",
             "password": "StrongPass1!",
             "full_name": "New User",
         },
     )
     assert response.status_code == 201, response.text
     data = response.json()
-    assert data["email"] == "new@test.local"
+    assert data["email"] == "new@test.example.com"
     assert data["role"] == "clinician"
     assert data["is_active"] is True
 
 
 def test_register_duplicate_email_returns_400(client: TestClient):
-    payload = {"email": "dup@test.local", "password": "StrongPass1!", "full_name": "Dup"}
+    payload = {"email": "dup@test.example.com", "password": "StrongPass1!", "full_name": "Dup"}
     client.post("/api/v1/auth/register", json=payload)
     response = client.post("/api/v1/auth/register", json=payload)
     assert response.status_code == 400
@@ -30,7 +30,7 @@ def test_register_duplicate_email_returns_400(client: TestClient):
 def test_register_validates_password_length(client: TestClient):
     response = client.post(
         "/api/v1/auth/register",
-        json={"email": "weak@test.local", "password": "short", "full_name": "Weak"},
+        json={"email": "weak@test.example.com", "password": "short", "full_name": "Weak"},
     )
     assert response.status_code == 422
 

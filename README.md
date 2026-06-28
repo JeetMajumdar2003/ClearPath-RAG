@@ -1,12 +1,16 @@
 # ClearPath RAG Platform
 
 > **Ground every clinical answer in evidence.**
-> Full-stack clinical decision support built on the Microsoft **SQL AI in a Day** workshop — Azure SQL does the retrieval and generation, this app wraps it in a secure, observable web platform.
+> Full-stack clinical decision support built on the **SQL AI in a Day** workshop. The retrieval + generation pipeline can run either:
+> 1. **Python pipeline (default)** — local SQL Server 2017+ for clinical data + OpenRouter REST API for embeddings/chat. No Azure subscription required.
+> 2. **Azure SQL stored-procedure pipeline (legacy)** — the original Azure SQL `VECTOR` + `AI_GENERATE_EMBEDDINGS` + `sp_invoke_external_rest_endpoint` path from the lab.
+>
+> Switching between them is a single env var (`AI_PROVIDER=openrouter|azure_python|azure`) — no code changes. The app itself provides the secure web interface, JWT auth, audit logs, and analytics on top of either pipeline.
 
 [![Stack](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Stack](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)](https://react.dev)
-[![Stack](https://img.shields.io/badge/Azure_SQL-vector--enabled-0078D4?logo=microsoftsqlserver&logoColor=white)](https://learn.microsoft.com/azure/azure-sql/)
-[![Stack](https://img.shields.io/badge/Azure_OpenAI-GPT--4o-412991?logo=openai&logoColor=white)](https://learn.microsoft.com/azure/ai-services/openai/)
+[![Stack](https://img.shields.io/badge/SQL_Server-2017+-CC2927?logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
+[![Stack](https://img.shields.io/badge/OpenRouter-OpenAI_compatible-6366f1)](https://openrouter.ai)
 [![Stack](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![Stack](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
 
