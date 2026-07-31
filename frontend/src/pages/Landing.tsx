@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Activity,
@@ -39,27 +39,38 @@ function Reveal({
   className?: string
   delay?: number
 }) {
-  const [shown, setShown] = useState(false)
-  // observe the rendered node via ref-less approach
+  const [shown, setShown] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+  const nodeRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const node = nodeRef.current
+    if (!node || shown) return
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setShown(true)
+            io.disconnect()
+          }
+        })
+      },
+      { threshold: 0.15 }
+    )
+
+    io.observe(node)
+    return () => io.disconnect()
+  }, [shown])
+
   return (
     <div
       className={`${className} ${shown ? 'animate-fade-up' : 'opacity-0'}`}
       style={{ animationDelay: `${delay}ms` }}
-      ref={(node) => {
-        if (!node) return
-        const io = new IntersectionObserver(
-          (entries) => {
-            entries.forEach((e) => {
-              if (e.isIntersecting) {
-                setShown(true)
-                io.disconnect()
-              }
-            })
-          },
-          { threshold: 0.15 }
-        )
-        io.observe(node)
-      }}
+      ref={nodeRef}
     >
       {children}
     </div>
@@ -112,7 +123,7 @@ function Navbar() {
             <a
               key={l.href}
               href={l.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
             >
               {l.label}
             </a>
@@ -132,24 +143,26 @@ function Navbar() {
         </div>
 
         <button
+          type="button"
           className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-700 hover:bg-slate-100 md:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle menu"
           aria-expanded={open}
+          aria-controls="mobile-nav-menu"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </nav>
 
       {open && (
-        <div className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
+        <div id="mobile-nav-menu" className="border-t border-slate-200 bg-white px-4 py-4 md:hidden">
           <div className="flex flex-col gap-1">
             {NAV_LINKS.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
               >
                 {l.label}
               </a>
@@ -364,7 +377,7 @@ const FEATURES = [
 
 function Features() {
   return (
-    <section id="features" className="bg-slate-50 py-24">
+    <section id="features" className="scroll-mt-24 bg-slate-50 py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="mx-auto max-w-2xl text-center">
           <Badge variant="default" className="mb-4">
@@ -430,7 +443,7 @@ const STEPS = [
 
 function HowItWorks() {
   return (
-    <section id="how-it-works" className="bg-white py-24">
+    <section id="how-it-works" className="scroll-mt-24 bg-white py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="mx-auto max-w-2xl text-center">
           <Badge variant="default" className="mb-4">
@@ -503,7 +516,7 @@ const ARCH = [
 
 function Architecture() {
   return (
-    <section id="architecture" className="relative overflow-hidden bg-navy py-24 text-white">
+    <section id="architecture" className="scroll-mt-24 relative overflow-hidden bg-navy py-24 text-white">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute right-1/4 top-10 h-72 w-72 rounded-full bg-teal-500/15 blur-3xl" />
       </div>
@@ -674,12 +687,15 @@ const FAQS = [
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
+  const panelId = useId()
   return (
     <div className="border-b border-slate-200">
       <button
-        className="flex w-full items-center justify-between gap-4 py-5 text-left"
+        type="button"
+        className="flex w-full items-center justify-between gap-4 rounded-md py-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-controls={panelId}
       >
         <span className="text-base font-medium text-slate-900">{q}</span>
         <ChevronDown
@@ -689,6 +705,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         />
       </button>
       <div
+        id={panelId}
         className={`grid transition-all duration-300 ${
           open ? 'grid-rows-[1fr] pb-5' : 'grid-rows-[0fr]'
         }`}
@@ -703,7 +720,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 function Faq() {
   return (
-    <section id="faq" className="bg-white py-24">
+    <section id="faq" className="scroll-mt-24 bg-white py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <Reveal className="text-center">
           <Badge variant="default" className="mb-4">
@@ -800,18 +817,18 @@ function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-slate-900">Product</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#features" className="hover:text-teal-700">Features</a></li>
-              <li><a href="#how-it-works" className="hover:text-teal-700">How it works</a></li>
-              <li><a href="#architecture" className="hover:text-teal-700">Architecture</a></li>
-              <li><Link to="/register" className="hover:text-teal-700">Get started</Link></li>
+              <li><a href="#features" className="rounded-sm hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">Features</a></li>
+              <li><a href="#how-it-works" className="rounded-sm hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">How it works</a></li>
+              <li><a href="#architecture" className="rounded-sm hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">Architecture</a></li>
+              <li><Link to="/register" className="rounded-sm hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">Get started</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="text-sm font-semibold text-slate-900">Resources</h4>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li><a href="#faq" className="hover:text-teal-700">FAQ</a></li>
-              <li><Link to="/login" className="hover:text-teal-700">Sign in</Link></li>
-              <li><a href="#evidence" className="hover:text-teal-700">Evidence</a></li>
+              <li><a href="#faq" className="rounded-sm hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">FAQ</a></li>
+              <li><Link to="/login" className="rounded-sm hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">Sign in</Link></li>
+              <li><a href="#evidence" className="rounded-sm hover:text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2">Evidence</a></li>
             </ul>
           </div>
         </div>
